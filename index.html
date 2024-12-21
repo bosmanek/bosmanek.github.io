@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Prosty Kalkulator Kolumn z CodeMirror</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/material.min.css">
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  table { border-collapse: collapse; margin-top: 20px; }
+  th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+  .column { width: 30%; display: inline-block; vertical-align: top; margin-right: 5%; }
+  .formula { margin-top: 20px; }
+  .result { margin-top: 20px; }
+  .CodeMirror { height: auto; border: 1px solid #ddd; padding: 10px; }
+</style>
+</head>
+<body>
+
+<h1>Prosty Kalkulator Kolumn</h1>
+
+<div class="column">
+  <h3>Kolumna {{kolumna_pierwsza}}</h3>
+  <textarea id="column1" rows="10">1
+2
+3
+4
+5</textarea>
+</div>
+
+<div class="column">
+  <h3>Kolumna {{kolumna_2}}</h3>
+  <textarea id="column2" rows="10">5
+4
+3
+2
+1</textarea>
+</div>
+
+<div class="formula">
+  <h3>Wpisz równanie:</h3>
+  <p>Użyj {{kolumna_pierwsza}} i {{kolumna_2}} jako zmiennych reprezentujących kolumny.</p>
+  <textarea id="equation">parseFloat(kolumna_pierwsza) + parseFloat(kolumna_2)</textarea>
+  <button onclick="calculate()">Oblicz</button>
+</div>
+
+<div class="result">
+  <h3>Wynik - Kolumna {{wynik}}</h3>
+  <table id="resultTable">
+    <tr>
+      <th>{{kolumna_pierwsza}}</th>
+      <th>{{kolumna_2}}</th>
+      <th>{{wynik}}</th>
+    </tr>
+  </table>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
+<script>
+  // Inicjalizacja CodeMirror dla pola z równaniem
+  const editor = CodeMirror.fromTextArea(document.getElementById('equation'), {
+    lineNumbers: true,
+    mode: 'javascript',
+    theme: 'material',
+    matchBrackets: true,
+  });
+
+function calculate() {
+  // Pobierz wartości z kolumn i podziel na poszczególne wiersze
+  const col1Data = document.getElementById('column1').value.split('\n').map(Number);
+  const col2Data = document.getElementById('column2').value.split('\n').map(Number);
+  let equation = editor.getValue();
+
+  // Zamień {{kolumna_pierwsza}} i {{kolumna_2}} na kolumna_pierwsza i kolumna_2 w równaniu
+  equation = equation.replace(/{{kolumna_pierwsza}}/g, 'kolumna_pierwsza');
+  equation = equation.replace(/{{kolumna_2}}/g, 'kolumna_2');
+
+  const resultTable = document.getElementById('resultTable');
+
+  // Wyczyść poprzednie wyniki
+  resultTable.innerHTML = '<tr><th>{{kolumna_pierwsza}}</th><th>{{kolumna_2}}</th><th>{{wynik}}</th></tr>';
+
+  // Określ długość na podstawie dłuższej kolumny
+  const length = Math.max(col1Data.length, col2Data.length);
+
+  for (let i = 0; i < length; i++) {
+    const value1 = !isNaN(col1Data[i]) ? col1Data[i] : 0;
+    const value2 = !isNaN(col2Data[i]) ? col2Data[i] : 0;
+
+    // Bezpieczne wykonywanie równania
+    let result;
+    try {
+      // Wstawienie wartości do równania
+      const func = new Function('kolumna_pierwsza', 'kolumna_2', 'return ' + equation + ';');
+      result = func(value1, value2);
+    } catch (e) {
+      alert('Błąd w równaniu: ' + e.message);
+      return;
+    }
+
+    // Dodanie wiersza z wynikami
+    const row = resultTable.insertRow();
+    row.insertCell(0).innerText = value1;
+    row.insertCell(1).innerText = value2;
+    row.insertCell(2).innerText = result;
+  }
+}
+</script>
+
+</body>
+</html>
